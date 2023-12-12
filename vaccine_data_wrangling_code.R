@@ -166,4 +166,33 @@ library(highcharter)
 
 
 
+#donut
+data <- vaccine_data %>%
+  filter(team=="Team1") %>% 
+  group_by(risk_level) %>% 
+  count() %>% 
+  select(risk_level,n) #%>%
+#group_by(risk_level) %>% 
+#mutate(total=sum(n))
+
+# Create a donut chart
+donut <- plot_ly(data, labels = data$risk_level, values = data$n, 
+                 type = "pie", hole = .4)
+
+# Update the donut chart layout
+donut <- donut %>%
+  layout(
+    title = "Risk Levels",
+    xaxis = list(
+      title = "Variable"
+    ),
+    yaxis = list(
+      title = "Value"
+    )
+  )
+
+# Return the donut chart
+donut
+
+sum(is.na(vaccine_data$risk_level))
 

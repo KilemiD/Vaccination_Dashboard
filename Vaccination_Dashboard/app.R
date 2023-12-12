@@ -226,9 +226,12 @@ ui <- navbarPage(
            
            fluidRow(
              column(
-               width=6,
-               highchartOutput("vaccination_trend",
-                               height = "500px",width = "700px")
+               width=4,
+               highchartOutput("vaccination_trend",height = "500px") #height = "500px",width = "700px"
+             ),
+             column(
+               width=3,
+               plotlyOutput("risk_level_donut",height = "500px") #,height = "500px",width = "700px"
              )
            )
 
@@ -361,7 +364,7 @@ server <- function(input, output) {
     }
   })
   
-  
+  #adding daily vaccination trend
   output$vaccination_trend <- renderHighchart({
     
     if ("All Teams" %in% input$teams){
@@ -372,13 +375,13 @@ server <- function(input, output) {
           count() %>% 
           select(x = date,  y = n), "areaspline",
         hcaes(x, y),
-        animation=F
+        animation=F,
+        color='#4f38fc'
       ) %>% 
         hc_title(text = "Daily Vaccination Trend",
                  align="center") %>% 
         hc_subtitle(text = "No. of CHW Vaccinated", useHTML = TRUE,
                     align="center") %>% 
-        #hc_tooltip(table = TRUE, sort = TRUE) %>% 
         hc_tooltip(pointFormat = "Vaccinations: <b>{point.y}</b>") %>% 
         hc_yAxis(
           title = list(text = "No. of Vaccinations"),
@@ -420,7 +423,8 @@ server <- function(input, output) {
         count() %>% 
         select(x = date,  y = n), "areaspline",
       hcaes(x, y),
-      animation=F
+      animation=F,
+      color='#4f38fc'
 
     ) %>% 
       hc_title(text = "Daily Vaccination Trend",
@@ -459,8 +463,76 @@ server <- function(input, output) {
     hc
     }
     
-    
   })
+  
+  #adding risk levels by team #donut chart
+  # Create a donut chart
+  output$risk_level_donut <- renderPlotly({
+    
+    if ("All Teams" %in% input$teams){
+      # Get the donut chart data for teams
+      data <- filteredData() %>%
+        filter(!is.na(risk_level)) %>% 
+        group_by(risk_level) %>% 
+        count() %>% 
+        select(risk_level,n) 
+      
+      colors <- c("red",  "green", "orange")
+      # Create a donut chart
+      donut <- plot_ly(data, labels = data$risk_level, values = data$n, 
+                       type = "pie", hole = .4) %>% 
+        add_trace(marker = list(colors = colors))
+      
+      # Update the donut chart layout
+      donut <- donut %>%
+        layout(
+          title = "Risk Levels",
+          xaxis = list(
+            title = "Variable"
+          ),
+          yaxis = list(
+            title = "Value"
+          )
+        )
+      
+      # Return the donut chart
+      donut
+    }
+    
+    else {
+    
+    # Get the donut chart data for teams
+    data <- filteredData() %>%
+      filter(team==input$teams) %>% 
+      group_by(risk_level) %>% 
+      count() %>% 
+      select(risk_level,n) 
+    
+    colors <- c("red",  "green", "orange")
+    # Create a donut chart
+    donut <- plot_ly(data, labels = data$risk_level, values = data$n, 
+                     type = "pie", hole = .4) %>% 
+      add_trace(marker = list(colors = colors))
+    
+    # Update the donut chart layout
+    donut <- donut %>%
+      layout(
+        title = "Risk Levels",
+        xaxis = list(
+          title = "Variable"
+        ),
+        yaxis = list(
+          title = "Value"
+        )
+      )
+    
+    # Return the donut chart
+    donut
+    }
+  })
+  
+  
+  
   
 }
 
