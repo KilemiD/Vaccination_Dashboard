@@ -143,3 +143,27 @@ fig <- fig %>% layout(margin = list(l = 50, r = 50, b = 50, t = 80))
 
 # Show the chart
 fig
+
+
+
+library(plotly)
+
+target_value <- 100
+current_value <- 75
+
+fig <- plot_ly(
+  labels = c("Progress", "Remaining"),
+  values = c(current_value, target_value - current_value),
+  type = "pie",
+  hole = 0.6,
+  marker = list(colors = c("blue", "lightgray"))
+)
+
+fig
+
+library(highcharter)
+?hc_plotOptions()
+
+
+
+

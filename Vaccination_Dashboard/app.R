@@ -13,6 +13,7 @@ library(tidyr)
 library(DBI)
 library(RMySQL)
 library(plotly)
+library(shinybusy)
 
 PARS <- list(
   debug = FALSE,
@@ -174,12 +175,30 @@ ui <- navbarPage(
              column(width=12,
                     # Metrics Filters
                     fluidRow(tags$head(tags$style(HTML('.box{-webkit-box-shadow: none; border-top: none; -moz-box-shadow: none;box-shadow: none;}'))),
-                             column(width =4,
-                                    plotlyOutput("target",height = "150px")
+                             
+                             column(
+                               width = 3,
+                               tags$p("Vaccinations Against Target"),
+                               progress_semicircle(value = nrow(vaccine_data)/7000,
+                                                   stroke_width = 16,
+                                                   color = "#1a4611",
+                                                   shiny_id = "semicircle"),
+        
+                             
+                             # column(width =3,
+                             #        progressBar(
+                             #        id = "pb2",
+                             #        value = nrow(vaccine_data),
+                             #        total = 7000,
+                             #        title = "Total Vaccinations Against Target",
+                             #        display_pct = TRUE
+                             #        )#,
+                                    #progressBar(value = 75) #, color = "blue"
+                                    #plotlyOutput("target",height = "150px")
                              ),
                              column(
                                width=8,
-                               tags$head(tags$style(HTML(".small-box {height: 150px, width: 50px}"))),
+                               tags$head(tags$style(HTML(".small-box {height: 150px"))),
                                valueBoxOutput("total_vaccinations"),
                                valueBoxOutput("today_vaccinations"),
                                valueBoxOutput("female_vaccinations")
@@ -188,10 +207,54 @@ ui <- navbarPage(
                              )
                     )
                     
+             ),
+           
+           fluidRow(
+             column(
+               width=6,
+               pickerInput("teams", label = "Select a Team:",
+                           choices = list("All Teams",
+                                          `Teams`= unique(as.character(vaccine_data$team)
+                                          )),
+                           options = list(
+                             
+                             `live-search` = TRUE),
+                           selected="All Teams"
+               )
+             )
+           ),
+           
+           fluidRow(
+             column(
+               width=6,
+               highchartOutput("vaccination_trend",
+                               height = "500px",width = "700px")
              )
            )
-  )
 
+           #,
+           # fluidRow(
+           #   column(
+           #     width = 4,
+           #     tags$p("Vaccinations Against Target"),
+           #     progress_semicircle(value = nrow(vaccine_data)/7000,
+           #                         stroke_width = 16,
+           #                         color = "#1a4611",
+           #                         shiny_id = "semicircle"),
+           #   )
+           # )
+           # fluidRow(
+           #   column(width=3,
+           #          progressBar(
+           #            id = "pb2",
+           #            value = nrow(vaccine_data),
+           #            total = 7000,
+           #            title = "Total Vaccinations Against Target",
+           #            display_pct = TRUE
+           #          ))
+           # )
+           )
+)
 
 
 #server
@@ -287,6 +350,116 @@ server <- function(input, output) {
     valueBox(lbl,
              "Female Vaccinations",icon("hourglass-half"),color="olive"
     )
+  })
+  
+  
+  filteredData = reactive({
+    if (input$teams == "All Teams") {
+      vaccine_data
+    } else {
+      filter(vaccine_data, team==input$teams)
+    }
+  })
+  
+  
+  output$vaccination_trend <- renderHighchart({
+    
+    if ("All Teams" %in% input$teams){
+      hc <- hchart(
+        filteredData() %>%
+          #filter(team==input$teams) %>% 
+          group_by(date) %>% 
+          count() %>% 
+          select(x = date,  y = n), "areaspline",
+        hcaes(x, y),
+        animation=F
+      ) %>% 
+        hc_title(text = "Daily Vaccination Trend",
+                 align="center") %>% 
+        hc_subtitle(text = "No. of CHW Vaccinated", useHTML = TRUE,
+                    align="center") %>% 
+        #hc_tooltip(table = TRUE, sort = TRUE) %>% 
+        hc_tooltip(pointFormat = "Vaccinations: <b>{point.y}</b>") %>% 
+        hc_yAxis(
+          title = list(text = "No. of Vaccinations"),
+          gridLineWidth=0
+        ) %>% 
+        hc_xAxis(
+          crosshair = list(label = list(enabled = TRUE)),
+          title = list(text = "Date"),
+          gridLineWidth = 0
+        ) %>% 
+        hc_plotOptions(
+          series = list(
+            marker = list(enabled = T),
+            dataLabels=list(enabled=T,
+                            minFontSize=30)
+          )
+        ) %>% 
+        hc_legend(layout = "proximate", align = "right")
+      
+      hc$x$hc_opts$series <- hc$x$hc_opts$series %>% 
+        map(function(x){
+          
+          # x <- hc$x$hc_opts$series %>% sample(1) %>% first()
+          x$marker <- list(symbol = x$symbol)
+          
+          x
+          
+        })
+      
+      hc
+    }
+    
+    else {
+    
+    hc <- hchart(
+      filteredData() %>%
+        filter(team==input$teams) %>% 
+        group_by(date) %>% 
+        count() %>% 
+        select(x = date,  y = n), "areaspline",
+      hcaes(x, y),
+      animation=F
+
+    ) %>% 
+      hc_title(text = "Daily Vaccination Trend",
+               align="center") %>% 
+      hc_subtitle(text = "No. of CHW Vaccinated", useHTML = TRUE,
+                  align="center") %>% 
+      hc_tooltip(pointFormat = "Vaccinations: <b>{point.y}</b>") %>% 
+      hc_yAxis(
+        title = list(text = "No. of Vaccinations"),
+        gridLineWidth=0
+      ) %>% 
+      hc_xAxis(
+        crosshair = list(label = list(enabled = TRUE)),
+        title = list(text = "Date"),
+        gridLineWidth=0
+      ) %>% 
+      hc_plotOptions(
+        series = list(
+          marker = list(enabled = FALSE),
+          dataLabels=list(enabled=T,
+                          minFontSize=30)
+        )
+      ) %>% 
+      hc_legend(layout = "proximate", align = "right")
+    
+    hc$x$hc_opts$series <- hc$x$hc_opts$series %>% 
+      map(function(x){
+        
+        # x <- hc$x$hc_opts$series %>% sample(1) %>% first()
+        x$marker <- list(symbol = x$symbol)
+        
+        x
+        
+      })
+    
+    hc
+    }
+    
+    
   })
   
 }
