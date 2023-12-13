@@ -227,11 +227,11 @@ ui <- navbarPage(
            fluidRow(
              column(
                width=4,
-               highchartOutput("vaccination_trend",height = "500px") #height = "500px",width = "700px"
+               highchartOutput("vaccination_trend") #height = "500px",width = "700px"
              ),
              column(
                width=3,
-               plotlyOutput("risk_level_donut",height = "500px") #,height = "500px",width = "700px"
+               plotlyOutput("risk_level_donut") #,height = "500px",width = "700px"
              )
            )
 
