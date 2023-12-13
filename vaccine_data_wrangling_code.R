@@ -196,3 +196,168 @@ donut
 
 sum(is.na(vaccine_data$risk_level))
 
+#trying some maps
+library(leaflet)
+library(rgdal)
+library(raster)
+library(dplyr)
+library(RColorBrewer)
+library(plotly)
+library(htmltools)
+library(DT)
+library(RColorBrewer)
+library(readr)
+library(reshape2)
+library("tidyverse")
+library(ggfittext)
+
+county_shp2<-readOGR("Vaccination_Dashboard/Kenya_Counties_(080719).shp")
+plot(county_shp2)
+
+voter2=read_csv("E:/2022/Shiny Dashboards/2022 Election Dashboard/voter2.csv")
+#keep this for merging the two files
+county_shp2@data = data.frame(county_shp2@data, 
+                              voter2[match(county_shp2@data$NAME_1, 
+                                         voter2$County),])
+
+#drawing a sample map
+leaflet(county_shp2) %>%
+  setView(lng=37.9083,lat=0.1769,zoom = 6) %>%
+  addPolygons(
+    color = ~pal4(Total),
+    smoothFactor = 0.5,
+    weight = 2, opacity = 1.0,
+    fillOpacity = 1.0,
+    highlightOptions = highlightOptions(
+      weight = 1,
+      color = "blue",
+      fillOpacity = 0.7,
+      bringToFront = TRUE
+    ),
+    label = paste(
+      "<strong>County:</strong>",county_shp2$NAME_1,
+      "<br>",
+      "<strong>Registered Voters:</strong>",county_shp2$Total
+      
+    ) %>% lapply(htmltools::HTML),
+    labelOptions = labelOptions( style = list("font-weight" = "normal", 
+                                              padding = "3px 8px"), 
+                                 textsize = "13px", direction = "auto"),
+    
+    popup = ~paste(
+      "<strong>County:</strong>",NAME_1,
+      "<br>",
+      "<strong>Registered Voters:</strong>",Total
+      
+    )
+    
+  ) %>%
+  addLegend(title = "Registered Voters",
+            pal = pal4, values = county_shp2$Total, opacity = 1)
+
+
+#color palettes
+pal4<-colorBin("YlOrBr",subset_kakamega$npscores)
+
+#trying to subset a county
+# Subset the shapefile to include only the desired county and its subcounties
+subset_shp <- county_shp2[county_shp2$County == "Kakamega", ]
+
+View(subset_shp)
+
+#drawing a sample map
+leaflet(subset_kakamega) %>%
+  #setView(lng=38,lat=0.1769,zoom = 10) %>%
+  addPolygons(
+    color = ~pal4(npscores),
+    smoothFactor = 0.5,
+    weight = 2, opacity = 1.0,
+    fillOpacity = 1.0,
+    highlightOptions = highlightOptions(
+      weight = 1,
+      color = "blue",
+      fillOpacity = 0.7,
+      bringToFront = TRUE
+    ),
+    label = paste(
+      "<strong>County:</strong>",subset_kakamega$CONSTITUEN,
+      "<br>",
+      "<strong>Registered Voters:</strong>",subset_kakamega$npscores
+      
+    ) %>% lapply(htmltools::HTML),
+    labelOptions = labelOptions( style = list("font-weight" = "normal", 
+                                              padding = "3px 8px"), 
+                                 textsize = "13px", direction = "auto"),
+    
+    popup = ~paste(
+       "<strong>County:</strong>",CONSTITUEN,
+       "<br>",
+       "<strong>Registered Voters:</strong>",npscores
+       
+     )
+    
+  ) %>%
+  addLegend(title = "Registered Voters",
+            pal = pal4, values = subset_kakamega$npscores, opacity = 1)
+
+#trying to load some constituency maps
+
+constituency_shp=readOGR("E:/2022/Shiny Dashboards/Twitter R Shiny Dashboards/code for twitter analysis/health_maps/Constituency.shp")
+plot(constituency_shp)                         
+str(constituency_shp$COUNTY_NAM)  
+
+#subset constituency
+subset_kakamega <- constituency_shp[constituency_shp$COUNTY_NAM == "KAKAMEGA", ]
+View(subset_kakamega)
+plot(subset_kakamega)
+
+?addPolygons
+
+unique(subset_kakamega$CONSTITUEN)
+unique(vaccine_data$subcounty_upper)
+
+library(tidytext)
+vaccine_data$subcounty_upper=toupper(vaccine_data$subcounty)
+
+vaccine_data_subcounty=vaccine_data %>% 
+  filter(!subcounty=="CHMT")
+head(vaccine_data_subcounty)
+
+#trying to merge the kakamega shape file witht the vaccine data
+subset_kakamega@data = data.frame(subset_kakamega@data, 
+                                  vaccine_data_subcounty[match(subset_kakamega@data$CONSTITUEN, 
+                                                               vaccine_data_subcounty$subcounty_upper),])
+
+
+View(subset_kakamega@data) %>% 
+  group_by(team) %>% 
+  count()
+
+library(sf)
+merged_data <- merge(vaccine_data_subcounty,subset_kakamega,
+                     by.x="subcounty_upper",by.y="CONSTITUEN" )
+st_write(merged_data, "kakamega.shp")
+
+"C:/Users/John/Documents/GitHub/Vaccination_Dashboard"  
+
+
+#summarizing by subcounty
+library(dplyr)
+df_sum <- vaccine_data_subcounty %>% 
+  filter(subcounty_upper %in% subset_kakamega$CONSTITUEN) %>%
+  group_by(subcounty_upper) %>%
+  summarise(npscores = mean(age,na.rm=T))
+df_sum
+
+
+subset_kakamega$npscores <- df_sum$npscores[match(subset_kakamega$CONSTITUEN, df_sum$subcounty_upper)]
+
+#trying to count the people vaccinated
+df_sum2 <- vaccine_data_subcounty %>%
+  #filter(team=="Team2") %>% 
+  filter(subcounty_upper %in% subset_kakamega$CONSTITUEN) %>%
+  group_by(subcounty_upper) %>%
+  count()
+
+View(df_sum2)
+
