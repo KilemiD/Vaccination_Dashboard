@@ -14,6 +14,16 @@ library(DBI)
 library(RMySQL)
 library(plotly)
 library(shinybusy)
+library(leaflet)
+library(rgdal)
+library(raster)
+library(RColorBrewer)
+library(plotly)
+library(htmltools)
+library(DT)
+library(readr)
+library(reshape2)
+library(ggfittext)
 
 PARS <- list(
   debug = FALSE,
@@ -156,6 +166,12 @@ valueBoxSpark <- function(value, subtitle, icon = NULL, color = "aqua",
 
 #reading the data
 vaccine_data <- readRDS("HCWDashboard.rds")
+#reading shape file data
+constituency_shp=readOGR("Constituency.shp")
+#subset county constituencies
+subset_kakamega <- constituency_shp[constituency_shp$COUNTY_NAM == "KAKAMEGA", ]
+#convert to upper case the subcounty column to match the constituency name
+vaccine_data$subcounty_upper=toupper(vaccine_data$subcounty)
 
 # ui
 ui <- navbarPage(
@@ -177,7 +193,7 @@ ui <- navbarPage(
                     fluidRow(tags$head(tags$style(HTML('.box{-webkit-box-shadow: none; border-top: none; -moz-box-shadow: none;box-shadow: none;}'))),
                              
                              column(
-                               width = 3,
+                               width = 4,
                                tags$p("Vaccinations Against Target"),
                                progress_semicircle(value = nrow(vaccine_data)/7000,
                                                    stroke_width = 16,
@@ -227,11 +243,16 @@ ui <- navbarPage(
            fluidRow(
              column(
                width=4,
-               highchartOutput("vaccination_trend") #height = "500px",width = "700px"
+               highchartOutput("vaccination_trend",height = "500px") #,height = "500px",width = "700px"
              ),
              column(
-               width=3,
-               plotlyOutput("risk_level_donut") #,height = "500px",width = "700px"
+               width=4,
+               plotlyOutput("risk_level_donut",height = "500px") #,height = "500px",width = "700px"
+             ),
+             
+             column(
+               width = 4,
+               leafletOutput("maps",height = "500px",width = "600px") #,height = 500
              )
            )
 
@@ -531,8 +552,61 @@ server <- function(input, output) {
     }
   })
   
-  
-  
+  output$maps<-renderLeaflet({
+    
+    vaccine_data_subcounty=vaccine_data %>% 
+      filter(!subcounty=="CHMT")
+    
+    #counting the people vaccinated
+    df_sum2 <- vaccine_data_subcounty %>%
+      filter(subcounty_upper %in% subset_kakamega$CONSTITUEN) %>%
+      group_by(subcounty_upper) %>%
+      count()
+    
+    subset_kakamega$vaccine_count <- df_sum2$n[match(subset_kakamega$CONSTITUEN, 
+                                                     df_sum2$subcounty_upper)]
+    
+    #color palettes
+    pal4<-colorBin("YlOrBr",subset_kakamega$vaccine_count)
+    
+    #drawing a sample map
+    leaflet(subset_kakamega) %>%
+      setView(lng=34.74,lat=0.44,zoom = 10) %>%
+      addPolygons(
+        color = ~pal4(vaccine_count),
+        smoothFactor = 0.5,
+        weight = 2, opacity = 1.0,
+        fillOpacity = 1.0,
+        highlightOptions = highlightOptions(
+          weight = 1,
+          color = "blue",
+          fillOpacity = 0.7,
+          bringToFront = TRUE
+        ),
+        label = paste(
+          "<strong>Sub-County:</strong>",subset_kakamega$CONSTITUEN,
+          "<br>",
+          "<strong>Vaccinated:</strong>",subset_kakamega$vaccine_count
+          
+        ) %>% lapply(htmltools::HTML),
+        labelOptions = labelOptions( style = list("font-weight" = "normal", 
+                                                  padding = "3px 8px"), 
+                                     textsize = "13px", direction = "auto"),
+        
+        popup = ~paste(
+          "<strong>Sub-County:</strong>",CONSTITUEN,
+          "<br>",
+          "<strong>Vaccinated CHW:</strong>",vaccine_count
+          
+        )
+        
+      ) %>%
+      addLegend(title = "Vaccinated CHW",
+                pal = pal4, values = subset_kakamega$vaccine_count, 
+                opacity = 1,
+                position="bottomright")
+    
+  })
   
 }
 

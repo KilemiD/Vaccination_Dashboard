@@ -257,7 +257,7 @@ leaflet(county_shp2) %>%
 
 
 #color palettes
-pal4<-colorBin("YlOrBr",subset_kakamega$npscores)
+pal4<-colorBin("YlOrBr",subset_kakamega$vaccine_count)
 
 #trying to subset a county
 # Subset the shapefile to include only the desired county and its subcounties
@@ -269,7 +269,7 @@ View(subset_shp)
 leaflet(subset_kakamega) %>%
   #setView(lng=38,lat=0.1769,zoom = 10) %>%
   addPolygons(
-    color = ~pal4(npscores),
+    color = ~pal4(vaccine_count),
     smoothFactor = 0.5,
     weight = 2, opacity = 1.0,
     fillOpacity = 1.0,
@@ -280,9 +280,9 @@ leaflet(subset_kakamega) %>%
       bringToFront = TRUE
     ),
     label = paste(
-      "<strong>County:</strong>",subset_kakamega$CONSTITUEN,
+      "<strong>Sub-County:</strong>",subset_kakamega$CONSTITUEN,
       "<br>",
-      "<strong>Registered Voters:</strong>",subset_kakamega$npscores
+      "<strong>Vaccinated:</strong>",subset_kakamega$vaccine_count
       
     ) %>% lapply(htmltools::HTML),
     labelOptions = labelOptions( style = list("font-weight" = "normal", 
@@ -290,15 +290,15 @@ leaflet(subset_kakamega) %>%
                                  textsize = "13px", direction = "auto"),
     
     popup = ~paste(
-       "<strong>County:</strong>",CONSTITUEN,
+       "<strong>Sub-County:</strong>",CONSTITUEN,
        "<br>",
-       "<strong>Registered Voters:</strong>",npscores
+       "<strong>Vaccinated CHW:</strong>",vaccine_count
        
      )
     
   ) %>%
-  addLegend(title = "Registered Voters",
-            pal = pal4, values = subset_kakamega$npscores, opacity = 1)
+  addLegend(title = "Vaccinated CHW",
+            pal = pal4, values = subset_kakamega$vaccine_count, opacity = 1)
 
 #trying to load some constituency maps
 
@@ -350,14 +350,14 @@ df_sum <- vaccine_data_subcounty %>%
 df_sum
 
 
-subset_kakamega$npscores <- df_sum$npscores[match(subset_kakamega$CONSTITUEN, df_sum$subcounty_upper)]
+subset_kakamega$vaccine_count <- df_sum2$n[match(subset_kakamega$CONSTITUEN, df_sum2$subcounty_upper)]
 
 #trying to count the people vaccinated
 df_sum2 <- vaccine_data_subcounty %>%
-  #filter(team=="Team2") %>% 
   filter(subcounty_upper %in% subset_kakamega$CONSTITUEN) %>%
   group_by(subcounty_upper) %>%
   count()
 
 View(df_sum2)
 
+?addLegend
