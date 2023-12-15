@@ -229,6 +229,8 @@ ui <- navbarPage(
            fluidRow(
              column(
                width=6,
+               div(
+                 style = "margin: 0 auto; width: 100%;",
                pickerInput("teams", label = "Select a Team:",
                            choices = list("All Teams",
                                           `Teams`= unique(as.character(vaccine_data$team)
@@ -236,8 +238,12 @@ ui <- navbarPage(
                            options = list(
                              
                              `live-search` = TRUE),
-                           selected="All Teams"
-               )
+                           selected="All Teams",
+                           multiple = TRUE
+               )),
+               style = "margin-left: auto; margin-right: auto; width: 50%;",  # Center the pickerInput
+               #div(style = "height: 30px;"),  # Adjust the height as needed
+               tags$style(HTML('.selectpicker { font-size: 25px !important; }'))  # Adjust the font size
              )
            ),
            
@@ -510,18 +516,22 @@ server <- function(input, output) {
       # Create a donut chart
       donut <- plot_ly(data, labels = data$risk_level, values = data$n, 
                        type = "pie", hole = .4) %>% 
-        add_trace(marker = list(colors = colors))
+        add_pie(hole = 0.4, marker = list(colors = colors), 
+                textinfo = "label+percent", textposition = "inside",
+                insidetextfont = list(size = 18),
+                hoverinfo = "label+percent")
       
       # Update the donut chart layout
       donut <- donut %>%
         layout(
-          title = "Risk Levels",
+          title = "Risk Levels of CHW in Kakamega County",
           xaxis = list(
             title = "Variable"
           ),
           yaxis = list(
             title = "Value"
-          )
+          ),
+          showlegend = FALSE
         )
       
       # Return the donut chart
@@ -541,18 +551,22 @@ server <- function(input, output) {
     # Create a donut chart
     donut <- plot_ly(data, labels = data$risk_level, values = data$n, 
                      type = "pie", hole = .4) %>% 
-      add_trace(marker = list(colors = colors))
+      add_pie(hole = 0.4, marker = list(colors = colors), 
+              textinfo = "label+percent", textposition = "inside",
+              insidetextfont = list(size = 18),
+              hoverinfo = "label+percent")
     
     # Update the donut chart layout
     donut <- donut %>%
       layout(
-        title = "Risk Levels",
+        title = "Risk Levels of CHW in Kakamega County",
         xaxis = list(
           title = "Variable"
         ),
         yaxis = list(
           title = "Value"
-        )
+        ),
+        showlegend=F
       )
     
     # Return the donut chart
@@ -632,8 +646,11 @@ server <- function(input, output) {
         slice_head(n = 7) %>% 
         ggplot(aes(x=reorder(cadre,n),y=n,
                    text = paste("Cadre: ", cadre, 
-                                "<br>Number Vaccinated: ", n)))+
+                                "<br>Number Vaccinated: ", n,
+                                "<br>Percentage: ", scales::percent(round(n / sum(n), 1)))))+
         geom_col(fill="#28b6f7")+
+        geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))), 
+                  position = position_stack(vjust = 0.8)) +
         # geom_text(aes(label=cadre,y =n),
         #           position = position_dodge(width = 0.5))+
         labs(
