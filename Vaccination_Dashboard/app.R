@@ -24,6 +24,7 @@ library(DT)
 library(readr)
 library(reshape2)
 library(ggfittext)
+library(stringr)
 
 PARS <- list(
   debug = FALSE,
@@ -254,6 +255,13 @@ ui <- navbarPage(
                width = 4,
                leafletOutput("maps",height = "500px",width = "600px") #,height = 500
              )
+           ),
+           
+           fluidRow(
+             column(
+               width=4,
+               plotlyOutput("cadre",height = 500)
+               )
            )
 
            #,
@@ -571,7 +579,9 @@ server <- function(input, output) {
     
     #drawing a sample map
     leaflet(subset_kakamega) %>%
-      setView(lng=34.74,lat=0.44,zoom = 10) %>%
+      addProviderTiles(providers$Esri.WorldTopoMap,
+                       options = tileOptions(opacity = 0.2)) %>%
+      setView(lng=34.74,lat=0.40,zoom = 9.8) %>%
       addPolygons(
         color = ~pal4(vaccine_count),
         smoothFactor = 0.5,
@@ -605,9 +615,74 @@ server <- function(input, output) {
                 pal = pal4, values = subset_kakamega$vaccine_count, 
                 opacity = 1,
                 position="bottomright")
+
     
   })
   
+  
+  #outputting cadre vaccinated numbers
+  output$cadre<-renderPlotly({
+    
+    if ("All Teams" %in% input$teams){
+      p=filteredData() %>% 
+        group_by(cadre) %>%
+        count() %>% 
+        arrange(desc(n)) %>%
+        ungroup() %>% 
+        slice_head(n = 7) %>% 
+        ggplot(aes(x=reorder(cadre,n),y=n,
+                   text = paste("Cadre: ", cadre, 
+                                "<br>Number Vaccinated: ", n)))+
+        geom_col(fill="#28b6f7")+
+        # geom_text(aes(label=cadre,y =n),
+        #           position = position_dodge(width = 0.5))+
+        labs(
+          title = "Vaccination by Cadre",
+          y="Number Vaccinated",
+          x=""
+        )+
+        coord_flip()+
+        theme_bw()+
+        theme(panel.grid = element_blank(),
+              plot.title = element_text(hjust = 0.5),
+              axis.text.x = element_text(angle = 45, hjust = 1))+
+        scale_x_discrete(labels = function(x) str_wrap(x, width = 20))
+      
+      ggplotly(p, tooltip = "text")
+    
+    }
+    
+    else{
+      
+      p=filteredData() %>%
+        filter(team==input$teams) %>% 
+        group_by(cadre) %>%
+        count() %>% 
+        arrange(desc(n)) %>%
+        ungroup() %>% 
+        slice_head(n = 7) %>%
+        ggplot(aes(x=reorder(cadre,n),y=n,
+                   text = paste("Cadre: ", cadre, 
+                                "<br>Number Vaccinated: ", n)))+
+        geom_col(fill="#28b6f7")+
+        # geom_text(aes(label=cadre,y =n),
+        #           position = position_dodge(width = 0.5))+
+        labs(
+          title = "Vaccination by Cadre",
+          y="Number Vaccinated",
+          x=""
+        )+
+        coord_flip()+
+        theme_bw()+
+        theme(panel.grid = element_blank(),
+              plot.title = element_text(hjust = 0.5),
+              axis.text.x = element_text(angle = 45, hjust = 1))+
+        scale_x_discrete(labels = function(x) str_wrap(x, width = 20))
+      
+      ggplotly(p, tooltip = "text")
+    }
+    
+    }) 
 }
 
 shinyApp(ui = ui, server = server)

@@ -361,3 +361,13 @@ df_sum2 <- vaccine_data_subcounty %>%
 View(df_sum2)
 
 ?addLegend
+
+?addProviderTiles
+
+vaccine_data %>% 
+  filter(team=="Team1") %>% 
+  group_by(cadre) %>%
+  count() %>% 
+  arrange(desc(n)) %>%
+  ungroup() %>% 
+  slice_head(n = 5)
