@@ -448,7 +448,7 @@ server <- function(input, output) {
           select(x = date,  y = n), "areaspline",
         hcaes(x, y),
         animation=F,
-        color='#025e24'
+        color='#3d9970'
       ) %>% 
         hc_title(text = "Daily Vaccination Trend",
                  align="center") %>% 
@@ -496,7 +496,7 @@ server <- function(input, output) {
         select(x = date,  y = n), "areaspline",
       hcaes(x, y),
       animation=F,
-      color='#025e24'
+      color='#3d9970'
 
     ) %>% 
       hc_title(text = "Daily Vaccination Trend",
@@ -549,7 +549,7 @@ server <- function(input, output) {
         count() %>% 
         select(risk_level,n) 
       
-      colors <- c("red",  "green", "orange")
+      colors <- c("red",  "#3d9970", "orange")
       # Create a donut chart
       donut <- plot_ly(data, labels = data$risk_level, values = data$n, 
                        type = "pie", hole = .6) %>% 
@@ -584,7 +584,7 @@ server <- function(input, output) {
       count() %>% 
       select(risk_level,n) 
     
-    colors <- c("red",  "green", "orange")
+    colors <- c("red",  "#3d9970", "orange")
     # Create a donut chart
     donut <- plot_ly(data, labels = data$risk_level, values = data$n, 
                      type = "pie", hole = .4) %>% 
@@ -628,7 +628,7 @@ server <- function(input, output) {
                                                      df_sum2$subcounty_upper)]
     
     #color palettes
-    pal4<-colorBin("YlOrBr",subset_kakamega$vaccine_count)
+    pal4<-colorBin("BuGn",subset_kakamega$vaccine_count)
     
     #drawing a sample map
     leaflet(subset_kakamega) %>%
@@ -685,7 +685,7 @@ server <- function(input, output) {
                                                        df_sum2$subcounty_upper)]
       
       #color palettes
-      pal4<-colorBin("YlOrBr",subset_kakamega$vaccine_count)
+      pal4<-colorBin("BuGn",subset_kakamega$vaccine_count)
       
       #drawing a sample map
       leaflet(subset_kakamega) %>%
@@ -746,7 +746,7 @@ server <- function(input, output) {
                    text = paste("Cadre: ", cadre, 
                                 "<br>Number Vaccinated: ", n,
                                 "<br>Percentage: ", scales::percent(round(n / sum(n), 1)))))+
-        geom_col(fill="#28b6f7")+
+        geom_col(fill="#3d9970")+
         geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))), 
                   position = position_stack(vjust = 0.8)) +
         # geom_text(aes(label=cadre,y =n),
@@ -779,7 +779,9 @@ server <- function(input, output) {
         ggplot(aes(x=reorder(cadre,n),y=n,
                    text = paste("Cadre: ", cadre, 
                                 "<br>Number Vaccinated: ", n)))+
-        geom_col(fill="#28b6f7")+
+        geom_col(fill="#3d9970")+
+        geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))), 
+                  position = position_stack(vjust = 0.8)) +
         # geom_text(aes(label=cadre,y =n),
         #           position = position_dodge(width = 0.5))+
         labs(
@@ -826,7 +828,7 @@ server <- function(input, output) {
                    text = paste("Age Group: ", age_group, 
                                 "<br>Number Vaccinated: ", n,
                                 "<br>Percentage: ", scales::percent(round(n / sum(n), 1)))))+
-        geom_col(fill="#28b6f7")+
+        geom_col(fill="#3d9970")+
         geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))), 
                   position = position_stack(vjust = 0.8)) +
         # geom_text(aes(label=cadre,y =n),
@@ -859,7 +861,7 @@ server <- function(input, output) {
                    text = paste("Age Group: ", age_group, 
                                 "<br>Number Vaccinated: ", n,
                                 "<br>Percentage: ", scales::percent(round(n / sum(n), 1)))))+
-        geom_col(fill="#28b6f7")+
+        geom_col(fill="#3d9970")+
         geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))), 
                   position = position_stack(vjust = 0.8)) +
         # geom_text(aes(label=cadre,y =n),
@@ -897,7 +899,7 @@ server <- function(input, output) {
                    text = paste("Gender: ", sex, 
                                 "<br>Number Vaccinated: ", n,
                                 "<br>Percentage: ", scales::percent(round(n / sum(n), 1)))))+
-        geom_col(fill="#28b6f7")+
+        geom_col(fill="#3d9970")+
         geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))), 
                   position = position_stack(vjust = 0.8)) +
         # geom_text(aes(label=cadre,y =n),
@@ -931,7 +933,9 @@ server <- function(input, output) {
         ggplot(aes(x=reorder(sex,n),y=n,
                    text = paste("Gender: ", sex, 
                                 "<br>Number Vaccinated: ", n)))+
-        geom_col(fill="#28b6f7")+
+        geom_col(fill="#3d9970")+
+        geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))), 
+                  position = position_stack(vjust = 0.8)) +
         # geom_text(aes(label=cadre,y =n),
         #           position = position_dodge(width = 0.5))+
         labs(

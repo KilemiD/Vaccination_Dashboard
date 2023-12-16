@@ -412,3 +412,5 @@ sum(is.na(vaccine_data$age_group))
 
 vaccine_data %>%
   filter(is.na(age_group))
+
+?colorBin
