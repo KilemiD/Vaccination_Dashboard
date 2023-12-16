@@ -371,3 +371,44 @@ vaccine_data %>%
   arrange(desc(n)) %>%
   ungroup() %>% 
   slice_head(n = 5)
+
+vaccine_data %>% 
+  filter(team=="Team1") %>% 
+  filter(!is.na(age)) %>% 
+  group_by(age) %>%
+  count()  
+
+summary(vaccine_data$age)
+
+# Define the age group breaks and labels
+breaks <- c(17, 24, 34, 44, 54, 65,100)
+labels <- c("18-24", "25-34", "35-44", 
+            "45-54","55-65","Over 65")
+
+# Use dplyr functions to create age groups
+vaccine_data <- vaccine_data %>%
+  mutate(age_group = cut(age, breaks = breaks, 
+                         labels = labels, include.lowest = TRUE))
+table(age_breaks$age_group)
+View(age_breaks)
+age_breaks %>% 
+  filter(age_group=="18-24")
+
+
+?plot_ly
+??tickmode
+
+
+vaccine_data %>% 
+  nrow()
+
+
+vaccine_data <- vaccine_data %>%
+  filter(age>17) %>% 
+  filter(!is.na(age)) %>% 
+  mutate(age_group = cut(age, breaks = breaks, 
+                         labels = labels, include.lowest = TRUE))
+sum(is.na(vaccine_data$age_group))
+
+vaccine_data %>%
+  filter(is.na(age_group))

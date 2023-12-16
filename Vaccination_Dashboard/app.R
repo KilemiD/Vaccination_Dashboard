@@ -195,12 +195,12 @@ ui <- navbarPage(
                              
                              column(
                                width = 4,
-                               tags$p("Vaccinations Against Target"),
-                               progress_semicircle(value = nrow(vaccine_data)/7000,
-                                                   stroke_width = 16,
-                                                   color = "#1a4611",
-                                                   shiny_id = "semicircle"),
-        
+                               # tags$p("Vaccinations Against Target"),
+                               # progress_semicircle(value = nrow(vaccine_data)/7000,
+                               #                     stroke_width = 16,
+                               #                     color = "#1a4611",
+                               #                     shiny_id = "semicircle"),
+                               # 
                              
                              # column(width =3,
                              #        progressBar(
@@ -211,7 +211,7 @@ ui <- navbarPage(
                              #        display_pct = TRUE
                              #        )#,
                                     #progressBar(value = 75) #, color = "blue"
-                                    #plotlyOutput("target",height = "150px")
+                            plotlyOutput("target",height = "150px")
                              ),
                              column(
                                width=8,
@@ -239,7 +239,7 @@ ui <- navbarPage(
                              
                              `live-search` = TRUE),
                            selected="All Teams",
-                           multiple = TRUE
+                           multiple = F
                )),
                style = "margin-left: auto; margin-right: auto; width: 50%;",  # Center the pickerInput
                #div(style = "height: 30px;"),  # Adjust the height as needed
@@ -267,30 +267,18 @@ ui <- navbarPage(
              column(
                width=4,
                plotlyOutput("cadre",height = 500)
-               )
+               ),
+             
+             column(
+               width=4,
+               plotlyOutput("age",height = 500)
+             ),
+             column(
+               width=4,
+               plotlyOutput("gender",height = 500)
+             )
            )
 
-           #,
-           # fluidRow(
-           #   column(
-           #     width = 4,
-           #     tags$p("Vaccinations Against Target"),
-           #     progress_semicircle(value = nrow(vaccine_data)/7000,
-           #                         stroke_width = 16,
-           #                         color = "#1a4611",
-           #                         shiny_id = "semicircle"),
-           #   )
-           # )
-           # fluidRow(
-           #   column(width=3,
-           #          progressBar(
-           #            id = "pb2",
-           #            value = nrow(vaccine_data),
-           #            total = 7000,
-           #            title = "Total Vaccinations Against Target",
-           #            display_pct = TRUE
-           #          ))
-           # )
            )
 )
 
@@ -317,17 +305,20 @@ server <- function(input, output) {
       value = ~lbl,
       title = "",
       gauge = list(
-        axis = list(range = list(0, target)),
-        bar = list(color = "darkgreen"),
-        steps = list(
-          list(range = c(0, target), color = "lightgray"),
-          list(range = c(0, lbl), color = "darkgreen")
+        axis = list(
+          visible = F  # Hide tick labels
         ),
-        threshold = list(
-          line = list(color = "red", width = 6),
-          thickness = 0.75,
-          value = ~lbl
-        )
+        #axis = list(range = list(0, target)),
+        bar = list(color = "darkgreen") ,
+        steps = list(
+        list(range = c(0, target), color = "lightgray"),
+           list(range = c(0, lbl), color = "darkgreen")
+         )
+        # threshold = list(
+        #   line = list(color = "red", width = 6),
+        #   thickness = 0.75,
+        #   value = ~lbl
+        # )
       )
     )
     
@@ -352,6 +343,8 @@ server <- function(input, output) {
   #output for total vaccinations
   output$total_vaccinations=renderValueBox({
     #rendering value box
+    if ("All Teams" %in% input$teams){
+    
     lbl <- vaccine_data %>% 
       nrow() %>%
       format(big.mark = ",", digits = 0,scientific=FALSE)
@@ -359,12 +352,25 @@ server <- function(input, output) {
     valueBox(lbl,
              "Total Vaccinations",icon("hourglass-half"),color="olive"
     )
+    }
+    
+    else{
+      lbl <- vaccine_data %>% 
+        filter(team==input$teams) %>%
+        nrow() %>%
+        format(big.mark = ",", digits = 0,scientific=FALSE)
+      
+      valueBox(lbl,
+               "Total Vaccinations",icon("hourglass-half"),color="olive"
+      )
+    }
   })
   
   
   #output for today vaccinations
   output$today_vaccinations=renderValueBox({
     #rendering value box
+    if ("All Teams" %in% input$teams){
     lbl <- vaccine_data %>%
       group_by(date)%>%
       count() %>% 
@@ -375,12 +381,31 @@ server <- function(input, output) {
     valueBox(lbl,
              "Today Vaccinations",icon("hourglass-half"),color="olive"
     )
+    
+    }
+    
+    else {
+      lbl <- vaccine_data %>%
+        filter(team==input$teams) %>%
+        group_by(date) %>%
+        count() %>% 
+        pull(n) %>% 
+        last() %>% 
+        format(big.mark = ",", digits = 0,scientific=FALSE)
+      
+      valueBox(lbl,
+               "Today Vaccinations",icon("hourglass-half"),color="olive"
+      )
+      
+    }
   })
   
   #output for ladies vaccinations
   output$female_vaccinations=renderValueBox({
     #rendering value box
+    if ("All Teams" %in% input$teams){
     lbl <- vaccine_data %>%
+
       filter(sex=="Female") %>% 
       nrow() %>% 
       format(big.mark = ",", digits = 0,scientific=FALSE)
@@ -388,8 +413,20 @@ server <- function(input, output) {
     valueBox(lbl,
              "Female Vaccinations",icon("hourglass-half"),color="olive"
     )
+    }
+    
+    else{
+      lbl <- vaccine_data %>%
+        filter(team==input$teams) %>%
+        filter(sex=="Female") %>% 
+        nrow() %>% 
+        format(big.mark = ",", digits = 0,scientific=FALSE)
+      
+      valueBox(lbl,
+               "Female Vaccinations",icon("hourglass-half"),color="olive"
+      )
+    }
   })
-  
   
   filteredData = reactive({
     if (input$teams == "All Teams") {
@@ -411,7 +448,7 @@ server <- function(input, output) {
           select(x = date,  y = n), "areaspline",
         hcaes(x, y),
         animation=F,
-        color='#4f38fc'
+        color='#025e24'
       ) %>% 
         hc_title(text = "Daily Vaccination Trend",
                  align="center") %>% 
@@ -459,7 +496,7 @@ server <- function(input, output) {
         select(x = date,  y = n), "areaspline",
       hcaes(x, y),
       animation=F,
-      color='#4f38fc'
+      color='#025e24'
 
     ) %>% 
       hc_title(text = "Daily Vaccination Trend",
@@ -515,8 +552,8 @@ server <- function(input, output) {
       colors <- c("red",  "green", "orange")
       # Create a donut chart
       donut <- plot_ly(data, labels = data$risk_level, values = data$n, 
-                       type = "pie", hole = .4) %>% 
-        add_pie(hole = 0.4, marker = list(colors = colors), 
+                       type = "pie", hole = .6) %>% 
+        add_pie(hole = 0.6, marker = list(colors = colors), 
                 textinfo = "label+percent", textposition = "inside",
                 insidetextfont = list(size = 18),
                 hoverinfo = "label+percent")
@@ -576,6 +613,8 @@ server <- function(input, output) {
   
   output$maps<-renderLeaflet({
     
+    if ("All Teams" %in% input$teams) {
+      
     vaccine_data_subcounty=vaccine_data %>% 
       filter(!subcounty=="CHMT")
     
@@ -629,6 +668,65 @@ server <- function(input, output) {
                 pal = pal4, values = subset_kakamega$vaccine_count, 
                 opacity = 1,
                 position="bottomright")
+    }
+    
+    else {
+      vaccine_data_subcounty=vaccine_data %>% 
+        filter(!subcounty=="CHMT")
+      
+      #counting the people vaccinated
+      df_sum2 <- vaccine_data_subcounty %>%
+        filter(team==input$teams) %>% 
+        filter(subcounty_upper %in% subset_kakamega$CONSTITUEN) %>%
+        group_by(subcounty_upper) %>%
+        count()
+      
+      subset_kakamega$vaccine_count <- df_sum2$n[match(subset_kakamega$CONSTITUEN, 
+                                                       df_sum2$subcounty_upper)]
+      
+      #color palettes
+      pal4<-colorBin("YlOrBr",subset_kakamega$vaccine_count)
+      
+      #drawing a sample map
+      leaflet(subset_kakamega) %>%
+        addProviderTiles(providers$Esri.WorldTopoMap,
+                         options = tileOptions(opacity = 0.2)) %>%
+        setView(lng=34.74,lat=0.40,zoom = 9.8) %>%
+        addPolygons(
+          color = ~pal4(vaccine_count),
+          smoothFactor = 0.5,
+          weight = 2, opacity = 1.0,
+          fillOpacity = 1.0,
+          highlightOptions = highlightOptions(
+            weight = 1,
+            color = "blue",
+            fillOpacity = 0.7,
+            bringToFront = TRUE
+          ),
+          label = paste(
+            "<strong>Sub-County:</strong>",subset_kakamega$CONSTITUEN,
+            "<br>",
+            "<strong>Vaccinated:</strong>",subset_kakamega$vaccine_count
+            
+          ) %>% lapply(htmltools::HTML),
+          labelOptions = labelOptions( style = list("font-weight" = "normal", 
+                                                    padding = "3px 8px"), 
+                                       textsize = "13px", direction = "auto"),
+          
+          popup = ~paste(
+            "<strong>Sub-County:</strong>",CONSTITUEN,
+            "<br>",
+            "<strong>Vaccinated CHW:</strong>",vaccine_count
+            
+          )
+          
+        ) %>%
+        addLegend(title = "Vaccinated CHW",
+                  pal = pal4, values = subset_kakamega$vaccine_count, 
+                  opacity = 1,
+                  position="bottomright")
+      
+    }
 
     
   })
@@ -662,7 +760,7 @@ server <- function(input, output) {
         theme_bw()+
         theme(panel.grid = element_blank(),
               plot.title = element_text(hjust = 0.5),
-              axis.text.x = element_text(angle = 45, hjust = 1))+
+              axis.text.x = element_text(angle = 0, hjust = 1))+
         scale_x_discrete(labels = function(x) str_wrap(x, width = 20))
       
       ggplotly(p, tooltip = "text")
@@ -693,13 +791,167 @@ server <- function(input, output) {
         theme_bw()+
         theme(panel.grid = element_blank(),
               plot.title = element_text(hjust = 0.5),
-              axis.text.x = element_text(angle = 45, hjust = 1))+
+              axis.text.x = element_text(angle = 0, hjust = 1))+
         scale_x_discrete(labels = function(x) str_wrap(x, width = 20))
       
       ggplotly(p, tooltip = "text")
     }
     
-    }) 
+    })
+  
+  #age chart (does vaccination differ by age/age group)
+  output$age=renderPlotly({
+    
+    # Define the age group breaks and labels
+    breaks <- c(17, 24, 34, 44, 54, 65,100)
+    
+    labels <- c("18-24", "25-34", "35-44", 
+                "45-54","55-65","Over 65")
+    
+    # Use dplyr functions to create age groups
+    vaccine_data <- vaccine_data %>%
+      filter(age>17) %>% 
+      filter(!is.na(age)) %>% 
+      mutate(age_group = cut(age, breaks = breaks, 
+                             labels = labels, include.lowest = TRUE))
+    
+    if ("All Teams" %in% input$teams){
+      p=vaccine_data %>% 
+        group_by(age_group) %>%
+        count() %>% 
+        arrange(desc(n)) %>%
+        ungroup() %>% 
+        slice_head(n = 7) %>% 
+        ggplot(aes(x=reorder(age_group,n),y=n,
+                   text = paste("Age Group: ", age_group, 
+                                "<br>Number Vaccinated: ", n,
+                                "<br>Percentage: ", scales::percent(round(n / sum(n), 1)))))+
+        geom_col(fill="#28b6f7")+
+        geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))), 
+                  position = position_stack(vjust = 0.8)) +
+        # geom_text(aes(label=cadre,y =n),
+        #           position = position_dodge(width = 0.5))+
+        labs(
+          title = "Vaccination by Age Group",
+          y="Number Vaccinated",
+          x=""
+        )+
+        coord_flip()+
+        theme_bw()+
+        theme(panel.grid = element_blank(),
+              plot.title = element_text(hjust = 0.5),
+              axis.text.x = element_text(angle = 0, hjust = 1))+
+        scale_x_discrete(labels = function(x) str_wrap(x, width = 20))
+      
+      ggplotly(p, tooltip = "text")
+      
+    }
+    
+    else{
+      p=vaccine_data %>% 
+        filter(team==input$teams) %>% 
+        group_by(age_group) %>%
+        count() %>% 
+        arrange(desc(n)) %>%
+        ungroup() %>% 
+        slice_head(n = 7) %>% 
+        ggplot(aes(x=reorder(age_group,n),y=n,
+                   text = paste("Age Group: ", age_group, 
+                                "<br>Number Vaccinated: ", n,
+                                "<br>Percentage: ", scales::percent(round(n / sum(n), 1)))))+
+        geom_col(fill="#28b6f7")+
+        geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))), 
+                  position = position_stack(vjust = 0.8)) +
+        # geom_text(aes(label=cadre,y =n),
+        #           position = position_dodge(width = 0.5))+
+        labs(
+          title = "Vaccination by Age Group",
+          y="Number Vaccinated",
+          x=""
+        )+
+        coord_flip()+
+        theme_bw()+
+        theme(panel.grid = element_blank(),
+              plot.title = element_text(hjust = 0.5),
+              axis.text.x = element_text(angle = 0, hjust = 1))+
+        scale_x_discrete(labels = function(x) str_wrap(x, width = 20))
+      
+      ggplotly(p, tooltip = "text")
+    }
+    
+
+  })
+  
+  #outputting cadre vaccinated numbers
+  output$gender<-renderPlotly({
+    
+    if ("All Teams" %in% input$teams){
+      p=filteredData() %>%
+        filter(!is.na(sex)) %>%
+        group_by(sex) %>%
+        count() %>% 
+        arrange(desc(n)) %>%
+        ungroup() %>% 
+        slice_head(n = 7) %>% 
+        ggplot(aes(x=reorder(sex,n),y=n,
+                   text = paste("Gender: ", sex, 
+                                "<br>Number Vaccinated: ", n,
+                                "<br>Percentage: ", scales::percent(round(n / sum(n), 1)))))+
+        geom_col(fill="#28b6f7")+
+        geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))), 
+                  position = position_stack(vjust = 0.8)) +
+        # geom_text(aes(label=cadre,y =n),
+        #           position = position_dodge(width = 0.5))+
+        labs(
+          title = "Vaccination by Gender",
+          y="Number Vaccinated",
+          x=""
+        )+
+        coord_flip()+
+        theme_bw()+
+        theme(panel.grid = element_blank(),
+              plot.title = element_text(hjust = 0.5),
+              axis.text.x = element_text(angle = 0, hjust = 1))+
+        scale_x_discrete(labels = function(x) str_wrap(x, width = 20))
+      
+      ggplotly(p, tooltip = "text")
+      
+    }
+    
+    else{
+      
+      p=filteredData() %>%
+        filter(!is.na(sex)) %>% 
+        filter(team==input$teams) %>% 
+        group_by(sex) %>%
+        count() %>% 
+        arrange(desc(n)) %>%
+        ungroup() %>% 
+        slice_head(n = 7) %>%
+        ggplot(aes(x=reorder(sex,n),y=n,
+                   text = paste("Gender: ", sex, 
+                                "<br>Number Vaccinated: ", n)))+
+        geom_col(fill="#28b6f7")+
+        # geom_text(aes(label=cadre,y =n),
+        #           position = position_dodge(width = 0.5))+
+        labs(
+          title = "Vaccination by Cadre",
+          y="Number Vaccinated",
+          x=""
+        )+
+        coord_flip()+
+        theme_bw()+
+        theme(panel.grid = element_blank(),
+              plot.title = element_text(hjust = 0.5),
+              axis.text.x = element_text(angle = 0, hjust = 1))+
+        scale_x_discrete(labels = function(x) str_wrap(x, width = 20))
+      
+      ggplotly(p, tooltip = "text")
+    }
+    
+  })
+  
+
 }
 
 shinyApp(ui = ui, server = server)
