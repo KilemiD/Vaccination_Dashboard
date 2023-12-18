@@ -26,6 +26,8 @@ library(ggfittext)
 library(stringr)
 library(dplyr)
 library(fontawesome)
+library(shinymanager)
+
 
 PARS <- list(
   debug = FALSE,
@@ -175,8 +177,41 @@ subset_kakamega <- constituency_shp[constituency_shp$COUNTY_NAM == "KAKAMEGA", ]
 #convert to upper case the subcounty column to match the constituency name
 vaccine_data$subcounty_upper=toupper(vaccine_data$subcounty)
 
+###############################################
+#credentials space
+inactivity <- "function idleTimer() {
+var t = setTimeout(logout, 120000);
+window.onmousemove = resetTimer; // catches mouse movements
+window.onmousedown = resetTimer; // catches mouse movements
+window.onclick = resetTimer;     // catches mouse clicks
+window.onscroll = resetTimer;    // catches scrolling
+window.onkeypress = resetTimer;  //catches keyboard actions
+
+function logout() {
+window.close();  //close the window
+}
+
+function resetTimer() {
+clearTimeout(t);
+t = setTimeout(logout, 5000);  // time is in milliseconds (1000 is 1 second)
+}
+}
+idleTimer();"
+
+
+# data.frame with credentials info
+credentials <- data.frame(
+  user = c("1", "fanny", "victor", "benoit"),
+  password = c("1", "azerty", "12345", "azerty"),
+  # comment = c("alsace", "auvergne", "bretagne"), %>% 
+  stringsAsFactors = FALSE
+)
+
+
+####################################
 # ui
-ui <- navbarPage(
+ui <- secure_app(head_auth = tags$script(inactivity),
+  navbarPage(
   title = tags$div(HTML('HCW VACCINATIONS DASHBOARD')),
   theme = "cerulean",
   #inverse = TRUE,
@@ -272,10 +307,21 @@ ui <- navbarPage(
 
            )
 )
+)
 
 
 #server
 server <- function(input, output) {
+  
+  
+  
+  #password authentication
+  
+  result_auth <- secure_server(check_credentials = check_credentials(credentials))
+  
+  output$res_auth <- renderPrint({
+    reactiveValuesToList(result_auth)
+  })
   
   #output for total vaccinations against target
   output$target=renderPlotly({
