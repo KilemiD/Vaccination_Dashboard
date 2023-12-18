@@ -24,7 +24,7 @@ lbl <- vaccine_data %>%
 
 
 nrow(vaccine_data)
-
+library(fontawesome)
 
 lbl <- vaccine_data %>%
   group_by(date)%>%
@@ -414,3 +414,119 @@ vaccine_data %>%
   filter(is.na(age_group))
 
 ?colorBin
+
+vaccine_data %>% 
+  select(date) %>% 
+  summarise(count = n())
+
+
+library(plotly)
+
+# Sample data
+vaccine_data <- data.frame(count = 4344)
+
+# Target value
+target <- 7000
+
+# Calculate percentage
+percentage <- (vaccine_data$count / target) * 100
+
+# Create a gauge chart
+fig <- plot_ly(
+  type = "indicator",
+  mode = "gauge+number",
+  value = vaccine_data$count,
+  title = "",
+  gauge = list(
+    axis = list(
+      visible = FALSE  # Hide tick labels
+    ),
+    bar = list(color = "darkgreen"),
+    steps = list(
+      list(range = c(0, target), color = "lightgray"),
+      list(range = c(0, vaccine_data$count), color = "darkgreen")
+    )
+  )
+)
+
+# Add annotations for percentage and numeric value
+fig <- fig %>% layout(
+  annotations = list(
+    text = paste(round(percentage, 1), "%", "out of", target),
+    x = 0.5,
+    y = -0.05,  # Adjust the y coordinate to move the text below the value
+    showarrow = FALSE
+  )
+)
+
+fig
+
+
+library(plotly)
+
+# Sample data
+vaccine_data <- data.frame(count = 4344)
+
+# Target value
+target <- 7000
+
+# Calculate percentage
+percentage <- (vaccine_data$count / target) * 100
+
+# Create a gauge chart
+fig <- plot_ly(
+  type = "indicator",
+  mode = "gauge+number",
+  value = 4344,
+  title = "",
+  gauge = list(
+    axis = list(
+      visible = FALSE  # Hide tick labels
+    ),
+    bar = list(color = "darkgreen"),
+    steps = list(
+      list(range = c(0, target), color = "lightgray"),
+      list(range = c(0, vaccine_data$count), color = "darkgreen")
+    )
+  )
+)
+
+# Add annotations for percentage and numeric value
+fig <- fig %>% layout(
+  annotations = list(
+    text = paste(vaccine_data$count, "out of", target),
+    x = 0.5,
+    y = -0.05,  # Adjust the y coordinate to move the text below the value
+    showarrow = FALSE
+  )
+)
+
+fig
+
+
+
+make_gauge <- function(x, n, color =  "#ef8d49", title = NULL) {
+  data.frame(x = c(5 * cos(seq(-pi, 0, len = 100)), 
+                   3 * cos(seq(0, -pi, len = 100)),
+                   5 * cos(seq(-pi, -pi + pi * x/n, len = 100)),
+                   3 * cos(seq( -pi + pi * x/n, -pi, len = 100))),
+             y = c(5 * -sin(seq(-pi, 0, len = 100)), 
+                   3 * -sin(seq(0, -pi, len = 100)),
+                   5 * -sin(seq(-pi, -pi + pi * x/n, len = 100)),
+                   3 * -sin(seq( -pi + pi * x/n, -pi, len = 100))),
+             group = rep(c("off", "on"), each = 200)) |>
+    ggplot(aes(x, y, fill = group)) +
+    geom_polygon() +
+    scale_fill_manual(values = c("#eceaea", color), guide = "none") +
+    annotate("text", x = c(-4, 0, 4), y = c(-0.5, 0.6, -0.5),
+             label = c(0, round(43, 1), 7000), size = c(12, 30, 12),
+             colour = c("#c8c8c8", "#808080", "#c8c8c8"), 
+             fontface = 2) +
+    ggtitle(title) +
+    coord_equal() +
+    theme_void() +
+    theme(plot.title = element_text(hjust = 0.5, size = 40, color = "#808080",
+                                    vjust = 2, face = 2))
+}
+
+make_gauge(4344, 7000)

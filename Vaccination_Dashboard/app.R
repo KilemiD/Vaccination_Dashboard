@@ -4,7 +4,6 @@ library(shinydashboard)
 library(ggplot2)
 library(purrr)
 library(highcharter)
-library(dplyr)
 library(scales)
 library(tidyverse)
 library(countrycode)
@@ -25,6 +24,8 @@ library(readr)
 library(reshape2)
 library(ggfittext)
 library(stringr)
+library(dplyr)
+library(fontawesome)
 
 PARS <- list(
   debug = FALSE,
@@ -177,7 +178,6 @@ vaccine_data$subcounty_upper=toupper(vaccine_data$subcounty)
 # ui
 ui <- navbarPage(
   title = tags$div(HTML('HCW VACCINATIONS DASHBOARD')),
-  #title = "KE: INSURANCE SECTOR",
   theme = "cerulean",
   #inverse = TRUE,
   tags$style(HTML('.navbar { background-color: #00b9e3; }')),
@@ -186,6 +186,7 @@ ui <- navbarPage(
   header = tagList(
     useShinydashboard()
   ),
+  tags$head(tags$style(HTML('.small-box .icon-large {top: 5px;}'))),
   #######################################################
   tabPanel("Overview",
            fluidRow(    
@@ -195,27 +196,12 @@ ui <- navbarPage(
                              
                              column(
                                width = 4,
-                               # tags$p("Vaccinations Against Target"),
-                               # progress_semicircle(value = nrow(vaccine_data)/7000,
-                               #                     stroke_width = 16,
-                               #                     color = "#1a4611",
-                               #                     shiny_id = "semicircle"),
-                               # 
-                             
-                             # column(width =3,
-                             #        progressBar(
-                             #        id = "pb2",
-                             #        value = nrow(vaccine_data),
-                             #        total = 7000,
-                             #        title = "Total Vaccinations Against Target",
-                             #        display_pct = TRUE
-                             #        )#,
-                                    #progressBar(value = 75) #, color = "blue"
                             plotlyOutput("target",height = "150px")
                              ),
                              column(
                                width=8,
-                               tags$head(tags$style(HTML(".small-box {height: 150px"))),
+                               tags$head(tags$style(HTML(".small-box {height: 150px;text-align: center;font-size: 20px;}"))),
+                               #tags$style(red_box_format),
                                valueBoxOutput("total_vaccinations"),
                                valueBoxOutput("today_vaccinations"),
                                valueBoxOutput("female_vaccinations")
@@ -246,35 +232,40 @@ ui <- navbarPage(
                tags$style(HTML('.selectpicker { font-size: 25px !important; }'))  # Adjust the font size
              )
            ),
-           
            fluidRow(
              column(
                width=4,
+               tags$h3("Daily Vaccination Trend"),
                highchartOutput("vaccination_trend",height = "500px") #,height = "500px",width = "700px"
              ),
              column(
                width=4,
+               tags$h3("Risk Levels of CHW in Kakamega County"),
                plotlyOutput("risk_level_donut",height = "500px") #,height = "500px",width = "700px"
              ),
              
              column(
                width = 4,
-               leafletOutput("maps",height = "500px",width = "600px") #,height = 500
+               tags$h3("Number of CHW Vaccinated in Each SubCounty"),
+               leafletOutput("maps",height = "500px") #,height = 500
              )
            ),
            
            fluidRow(
              column(
                width=4,
+               tags$h3("Number of CHW Vaccinated by Cadre"),
                plotlyOutput("cadre",height = 500)
                ),
              
              column(
                width=4,
+               tags$h3("Number of CHW Vaccinated by Age"),
                plotlyOutput("age",height = 500)
              ),
              column(
                width=4,
+               tags$h3("Number of CHW Vaccinated by Gender"),
                plotlyOutput("gender",height = 500)
              )
            )
@@ -298,6 +289,7 @@ server <- function(input, output) {
     percentage <- (lbl / target) * 100
     # Create a gauge chart
     fig <- plot_ly(
+      # data = lbl,
       type = "indicator",
       #mode = "gauge+number",
       mode = "gauge+number", #+delta
@@ -314,18 +306,13 @@ server <- function(input, output) {
         list(range = c(0, target), color = "lightgray"),
            list(range = c(0, lbl), color = "darkgreen")
          )
-        # threshold = list(
-        #   line = list(color = "red", width = 6),
-        #   thickness = 0.75,
-        #   value = ~lbl
-        # )
       )
     )
     
     # Add annotations for percentage and numeric value
     fig <- fig %>% layout(
       annotations = list(
-        text = paste(round(percentage, 1), "%"),
+        text = paste(round(percentage, 1), "%","out of", target),
         x = 0.5,
         y = -0.05,  # Adjust the y coordinate to move the text below the value
         showarrow = F
@@ -350,7 +337,7 @@ server <- function(input, output) {
       format(big.mark = ",", digits = 0,scientific=FALSE)
     
     valueBox(lbl,
-             "Total Vaccinations",icon("hourglass-half"),color="olive"
+             "Total Vaccinations",icon("user"),color="olive"
     )
     }
     
@@ -361,7 +348,7 @@ server <- function(input, output) {
         format(big.mark = ",", digits = 0,scientific=FALSE)
       
       valueBox(lbl,
-               "Total Vaccinations",icon("hourglass-half"),color="olive"
+               "Total Vaccinations",icon("user"),color="olive"
       )
     }
   })
@@ -379,7 +366,7 @@ server <- function(input, output) {
       format(big.mark = ",", digits = 0,scientific=FALSE)
     
     valueBox(lbl,
-             "Today Vaccinations",icon("hourglass-half"),color="olive"
+             "Today Vaccinations",icon("user-check"),color="olive"
     )
     
     }
@@ -394,7 +381,7 @@ server <- function(input, output) {
         format(big.mark = ",", digits = 0,scientific=FALSE)
       
       valueBox(lbl,
-               "Today Vaccinations",icon("hourglass-half"),color="olive"
+               "Today Vaccinations",icon("user-check"),color="olive"
       )
       
     }
@@ -411,7 +398,7 @@ server <- function(input, output) {
       format(big.mark = ",", digits = 0,scientific=FALSE)
     
     valueBox(lbl,
-             "Female Vaccinations",icon("hourglass-half"),color="olive"
+             "Female Vaccinations",icon("user"),color="olive"
     )
     }
     
@@ -423,7 +410,7 @@ server <- function(input, output) {
         format(big.mark = ",", digits = 0,scientific=FALSE)
       
       valueBox(lbl,
-               "Female Vaccinations",icon("hourglass-half"),color="olive"
+               "Female Vaccinations",icon("user"),color="olive"
       )
     }
   })
@@ -445,15 +432,15 @@ server <- function(input, output) {
           #filter(team==input$teams) %>% 
           group_by(date) %>% 
           count() %>% 
-          select(x = date,  y = n), "areaspline",
+          dplyr::select(x = date,  y = n), "areaspline",
         hcaes(x, y),
         animation=F,
         color='#3d9970'
       ) %>% 
-        hc_title(text = "Daily Vaccination Trend",
-                 align="center") %>% 
-        hc_subtitle(text = "No. of CHW Vaccinated", useHTML = TRUE,
-                    align="center") %>% 
+        # hc_title(text = "Daily Vaccination Trend",
+        #          align="center") %>% 
+        # hc_subtitle(text = "No. of CHW Vaccinated", useHTML = TRUE,
+        #             align="center") %>% 
         hc_tooltip(pointFormat = "Vaccinations: <b>{point.y}</b>") %>% 
         hc_yAxis(
           title = list(text = "No. of Vaccinations"),
@@ -493,16 +480,16 @@ server <- function(input, output) {
         filter(team==input$teams) %>% 
         group_by(date) %>% 
         count() %>% 
-        select(x = date,  y = n), "areaspline",
+        dplyr::select(x = date,  y = n), "areaspline",
       hcaes(x, y),
       animation=F,
       color='#3d9970'
 
     ) %>% 
-      hc_title(text = "Daily Vaccination Trend",
-               align="center") %>% 
-      hc_subtitle(text = "No. of CHW Vaccinated", useHTML = TRUE,
-                  align="center") %>% 
+      # hc_title(text = "Daily Vaccination Trend",
+      #          align="center") %>% 
+      # hc_subtitle(text = "No. of CHW Vaccinated", useHTML = TRUE,
+      #             align="center") %>% 
       hc_tooltip(pointFormat = "Vaccinations: <b>{point.y}</b>") %>% 
       hc_yAxis(
         title = list(text = "No. of Vaccinations"),
@@ -547,7 +534,7 @@ server <- function(input, output) {
         filter(!is.na(risk_level)) %>% 
         group_by(risk_level) %>% 
         count() %>% 
-        select(risk_level,n) 
+        dplyr::select(risk_level,n) 
       
       colors <- c("red",  "#3d9970", "orange")
       # Create a donut chart
@@ -561,7 +548,7 @@ server <- function(input, output) {
       # Update the donut chart layout
       donut <- donut %>%
         layout(
-          title = "Risk Levels of CHW in Kakamega County",
+          #title = "Risk Levels of CHW in Kakamega County",
           xaxis = list(
             title = "Variable"
           ),
@@ -582,7 +569,7 @@ server <- function(input, output) {
       filter(team==input$teams) %>% 
       group_by(risk_level) %>% 
       count() %>% 
-      select(risk_level,n) 
+      dplyr::select(risk_level,n) 
     
     colors <- c("red",  "#3d9970", "orange")
     # Create a donut chart
@@ -596,7 +583,7 @@ server <- function(input, output) {
     # Update the donut chart layout
     donut <- donut %>%
       layout(
-        title = "Risk Levels of CHW in Kakamega County",
+        #title = "Risk Levels of CHW in Kakamega County",
         xaxis = list(
           title = "Variable"
         ),
@@ -747,12 +734,13 @@ server <- function(input, output) {
                                 "<br>Number Vaccinated: ", n,
                                 "<br>Percentage: ", scales::percent(round(n / sum(n), 1)))))+
         geom_col(fill="#3d9970")+
-        geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))), 
+        geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))),
+                  color = "white",
                   position = position_stack(vjust = 0.8)) +
         # geom_text(aes(label=cadre,y =n),
         #           position = position_dodge(width = 0.5))+
         labs(
-          title = "Vaccination by Cadre",
+          #title = "Vaccination by Cadre",
           y="Number Vaccinated",
           x=""
         )+
@@ -780,12 +768,13 @@ server <- function(input, output) {
                    text = paste("Cadre: ", cadre, 
                                 "<br>Number Vaccinated: ", n)))+
         geom_col(fill="#3d9970")+
-        geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))), 
+        geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))),
+                  color = "white",
                   position = position_stack(vjust = 0.8)) +
         # geom_text(aes(label=cadre,y =n),
         #           position = position_dodge(width = 0.5))+
         labs(
-          title = "Vaccination by Cadre",
+          #title = "Vaccination by Cadre",
           y="Number Vaccinated",
           x=""
         )+
@@ -829,12 +818,13 @@ server <- function(input, output) {
                                 "<br>Number Vaccinated: ", n,
                                 "<br>Percentage: ", scales::percent(round(n / sum(n), 1)))))+
         geom_col(fill="#3d9970")+
-        geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))), 
+        geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))),
+                  color = "white",
                   position = position_stack(vjust = 0.8)) +
         # geom_text(aes(label=cadre,y =n),
         #           position = position_dodge(width = 0.5))+
         labs(
-          title = "Vaccination by Age Group",
+          #title = "Vaccination by Age Group",
           y="Number Vaccinated",
           x=""
         )+
@@ -862,12 +852,13 @@ server <- function(input, output) {
                                 "<br>Number Vaccinated: ", n,
                                 "<br>Percentage: ", scales::percent(round(n / sum(n), 1)))))+
         geom_col(fill="#3d9970")+
-        geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))), 
+        geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))),
+                  color = "white",
                   position = position_stack(vjust = 0.8)) +
         # geom_text(aes(label=cadre,y =n),
         #           position = position_dodge(width = 0.5))+
         labs(
-          title = "Vaccination by Age Group",
+          #title = "Vaccination by Age Group",
           y="Number Vaccinated",
           x=""
         )+
@@ -900,12 +891,13 @@ server <- function(input, output) {
                                 "<br>Number Vaccinated: ", n,
                                 "<br>Percentage: ", scales::percent(round(n / sum(n), 1)))))+
         geom_col(fill="#3d9970")+
-        geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))), 
+        geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))),
+                  color = "white",
                   position = position_stack(vjust = 0.8)) +
         # geom_text(aes(label=cadre,y =n),
         #           position = position_dodge(width = 0.5))+
         labs(
-          title = "Vaccination by Gender",
+          #title = "Vaccination by Gender",
           y="Number Vaccinated",
           x=""
         )+
@@ -934,12 +926,13 @@ server <- function(input, output) {
                    text = paste("Gender: ", sex, 
                                 "<br>Number Vaccinated: ", n)))+
         geom_col(fill="#3d9970")+
-        geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))), 
+        geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))),
+                  color = "white",
                   position = position_stack(vjust = 0.8)) +
         # geom_text(aes(label=cadre,y =n),
         #           position = position_dodge(width = 0.5))+
         labs(
-          title = "Vaccination by Cadre",
+          #title = "Vaccination by Cadre",
           y="Number Vaccinated",
           x=""
         )+
