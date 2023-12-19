@@ -29,7 +29,7 @@ library(fontawesome)
 library(shinymanager)
 
 
-PARS <- list(
+PARS = list(
   debug = FALSE,
   classcol = "col-lg-offset-1 col-lg-10 col-md-offset-0 col-md-12 col-sm-offset-0 col-sm-12",
   sparkline_color = "#333333",
@@ -62,7 +62,7 @@ options(
     )
 )
 
-dropdownButtonp <- purrr::partial(
+dropdownButtonp = purrr::partial(
   dropdownButton,
   status = "customstatus",
   size = "sm",
@@ -74,9 +74,9 @@ dropdownButtonp <- purrr::partial(
 #spark
 
 #theme
-hc_theme_sparkline_vb <- function(...) {
+hc_theme_sparkline_vb = function(...) {
   
-  theme <- list(
+  theme = list(
     chart = list(
       backgroundColor = NULL,
       margins = c(0, 0, 0, 0),
@@ -128,10 +128,10 @@ hc_theme_sparkline_vb <- function(...) {
       text = ""
     )
   )
-  theme <- structure(theme, class = "hc_theme")
+  theme = structure(theme, class = "hc_theme")
   
   if (length(list(...)) > 0) {
-    theme <- hc_theme_merge(
+    theme = hc_theme_merge(
       theme,
       hc_theme(...)
     )
@@ -140,7 +140,7 @@ hc_theme_sparkline_vb <- function(...) {
   theme
 }
 
-valueBoxSpark <- function(value, subtitle, icon = NULL, color = "aqua", 
+valueBoxSpark = function(value, subtitle, icon = NULL, color = "aqua", 
                           width = 4, href = NULL, spark = NULL, height_spark = "150px",minititle = NULL) {
   
   shinydashboard:::validateColor(color)
@@ -148,7 +148,7 @@ valueBoxSpark <- function(value, subtitle, icon = NULL, color = "aqua",
   if (!is.null(icon)) 
     shinydashboard:::tagAssert(icon, type = "i")
   
-  boxContent <- div(
+  boxContent = div(
     class = paste0("small-box bg-", color),
     div(
       class = "inner",
@@ -162,24 +162,27 @@ valueBoxSpark <- function(value, subtitle, icon = NULL, color = "aqua",
   )
   
   if (!is.null(href)) 
-    boxContent <- a(href = href, boxContent)
+    boxContent = a(href = href, boxContent)
   
   div(class = if (!is.null(width)) 
     paste0("col-sm-", width), boxContent)
 }
 
 #reading the data
-vaccine_data <- readRDS("HCWDashboard.rds")
+vaccine_data = readRDS("HCWDashboard.rds")
+
 #reading shape file data
 constituency_shp=readOGR("Constituency.shp")
+
 #subset county constituencies
-subset_kakamega <- constituency_shp[constituency_shp$COUNTY_NAM == "KAKAMEGA", ]
+subset_kakamega = constituency_shp[constituency_shp$COUNTY_NAM == "KAKAMEGA", ]
+
 #convert to upper case the subcounty column to match the constituency name
 vaccine_data$subcounty_upper=toupper(vaccine_data$subcounty)
 
 ###############################################
 #credentials space
-inactivity <- "function idleTimer() {
+inactivity = "function idleTimer() {
 var t = setTimeout(logout, 120000);
 window.onmousemove = resetTimer; // catches mouse movements
 window.onmousedown = resetTimer; // catches mouse movements
@@ -200,24 +203,24 @@ idleTimer();"
 
 
 # data.frame with credentials info
-credentials <- data.frame(
-  user = c("1", "fanny", "victor", "benoit"),
-  password = c("1", "azerty", "12345", "azerty"),
-  # comment = c("alsace", "auvergne", "bretagne"), %>% 
+credentials = data.frame(
+  user = c("eric", "nungari", "isaac"),
+  password = c("eric", "nungari", "isaac"),
   stringsAsFactors = FALSE
 )
 
 
 ####################################
 # ui
-ui <- secure_app(head_auth = tags$script(inactivity),
+ui = secure_app(head_auth = tags$script(inactivity),
   navbarPage(
   title = tags$div(HTML('HCW VACCINATIONS DASHBOARD')),
-  theme = "cerulean",
+  theme = "flatly",
   #inverse = TRUE,
   tags$style(HTML('.navbar { background-color: #00b9e3; }')),
   selected = "Overview",
-  ###### Here : insert shinydashboard dependencies ######
+  
+  ###### Here : insert other shinydashboard dependencies ######
   header = tagList(
     useShinydashboard()
   ),
@@ -236,7 +239,6 @@ ui <- secure_app(head_auth = tags$script(inactivity),
                              column(
                                width=8,
                                tags$head(tags$style(HTML(".small-box {height: 150px;text-align: center;font-size: 20px;}"))),
-                               #tags$style(red_box_format),
                                valueBoxOutput("total_vaccinations"),
                                valueBoxOutput("today_vaccinations"),
                                valueBoxOutput("female_vaccinations")
@@ -311,42 +313,38 @@ ui <- secure_app(head_auth = tags$script(inactivity),
 
 
 #server
-server <- function(input, output) {
+server = function(input, output) {
   
   
   
   #password authentication
   
-  result_auth <- secure_server(check_credentials = check_credentials(credentials))
+  result_auth = secure_server(check_credentials = check_credentials(credentials))
   
-  output$res_auth <- renderPrint({
+  output$res_auth = renderPrint({
     reactiveValuesToList(result_auth)
   })
   
   #output for total vaccinations against target
   output$target=renderPlotly({
     
-    lbl <- vaccine_data %>% 
+    lbl = vaccine_data %>% 
       nrow()
     
     target=7000
     
     # Calculate percentage
-    percentage <- (lbl / target) * 100
+    percentage = (lbl / target) * 100
     # Create a gauge chart
-    fig <- plot_ly(
-      # data = lbl,
+    fig = plot_ly(
       type = "indicator",
-      #mode = "gauge+number",
-      mode = "gauge+number", #+delta
-      #delta = list(reference = 4500),
+      mode = "gauge+number", 
       value = ~lbl,
       title = "",
       gauge = list(
         axis = list(
           visible = F  # Hide tick labels
         ),
-        #axis = list(range = list(0, target)),
         bar = list(color = "darkgreen") ,
         steps = list(
         list(range = c(0, target), color = "lightgray"),
@@ -356,7 +354,7 @@ server <- function(input, output) {
     )
     
     # Add annotations for percentage and numeric value
-    fig <- fig %>% layout(
+    fig = fig %>% layout(
       annotations = list(
         text = paste(round(percentage, 1), "%","out of", target),
         x = 0.5,
@@ -366,7 +364,7 @@ server <- function(input, output) {
     )
     
     # Customize layout
-    fig <- fig %>% layout(margin = list(b = 5, t = 15))
+    fig = fig %>% layout(margin = list(b = 5, t = 15))
     
     # Show the chart
     fig
@@ -378,7 +376,7 @@ server <- function(input, output) {
     #rendering value box
     if ("All Teams" %in% input$teams){
     
-    lbl <- vaccine_data %>% 
+    lbl = vaccine_data %>% 
       nrow() %>%
       format(big.mark = ",", digits = 0,scientific=FALSE)
     
@@ -388,7 +386,7 @@ server <- function(input, output) {
     }
     
     else{
-      lbl <- vaccine_data %>% 
+      lbl = vaccine_data %>% 
         filter(team==input$teams) %>%
         nrow() %>%
         format(big.mark = ",", digits = 0,scientific=FALSE)
@@ -402,9 +400,10 @@ server <- function(input, output) {
   
   #output for today vaccinations
   output$today_vaccinations=renderValueBox({
+    
     #rendering value box
     if ("All Teams" %in% input$teams){
-    lbl <- vaccine_data %>%
+    lbl = vaccine_data %>%
       group_by(date)%>%
       count() %>% 
       pull(n) %>% 
@@ -418,7 +417,7 @@ server <- function(input, output) {
     }
     
     else {
-      lbl <- vaccine_data %>%
+      lbl = vaccine_data %>%
         filter(team==input$teams) %>%
         group_by(date) %>%
         count() %>% 
@@ -437,7 +436,7 @@ server <- function(input, output) {
   output$female_vaccinations=renderValueBox({
     #rendering value box
     if ("All Teams" %in% input$teams){
-    lbl <- vaccine_data %>%
+    lbl = vaccine_data %>%
 
       filter(sex=="Female") %>% 
       nrow() %>% 
@@ -449,7 +448,7 @@ server <- function(input, output) {
     }
     
     else{
-      lbl <- vaccine_data %>%
+      lbl = vaccine_data %>%
         filter(team==input$teams) %>%
         filter(sex=="Female") %>% 
         nrow() %>% 
@@ -470,10 +469,10 @@ server <- function(input, output) {
   })
   
   #adding daily vaccination trend
-  output$vaccination_trend <- renderHighchart({
+  output$vaccination_trend = renderHighchart({
     
     if ("All Teams" %in% input$teams){
-      hc <- hchart(
+      hc = hchart(
         filteredData() %>%
           #filter(team==input$teams) %>% 
           group_by(date) %>% 
@@ -483,10 +482,6 @@ server <- function(input, output) {
         animation=F,
         color='#3d9970'
       ) %>% 
-        # hc_title(text = "Daily Vaccination Trend",
-        #          align="center") %>% 
-        # hc_subtitle(text = "No. of CHW Vaccinated", useHTML = TRUE,
-        #             align="center") %>% 
         hc_tooltip(pointFormat = "Vaccinations: <b>{point.y}</b>") %>% 
         hc_yAxis(
           title = list(text = "No. of Vaccinations"),
@@ -506,11 +501,9 @@ server <- function(input, output) {
         ) %>% 
         hc_legend(layout = "proximate", align = "right")
       
-      hc$x$hc_opts$series <- hc$x$hc_opts$series %>% 
+      hc$x$hc_opts$series = hc$x$hc_opts$series %>% 
         map(function(x){
-          
-          # x <- hc$x$hc_opts$series %>% sample(1) %>% first()
-          x$marker <- list(symbol = x$symbol)
+          x$marker = list(symbol = x$symbol)
           
           x
           
@@ -521,7 +514,7 @@ server <- function(input, output) {
     
     else {
     
-    hc <- hchart(
+    hc = hchart(
       filteredData() %>%
         filter(team==input$teams) %>% 
         group_by(date) %>% 
@@ -532,10 +525,6 @@ server <- function(input, output) {
       color='#3d9970'
 
     ) %>% 
-      # hc_title(text = "Daily Vaccination Trend",
-      #          align="center") %>% 
-      # hc_subtitle(text = "No. of CHW Vaccinated", useHTML = TRUE,
-      #             align="center") %>% 
       hc_tooltip(pointFormat = "Vaccinations: <b>{point.y}</b>") %>% 
       hc_yAxis(
         title = list(text = "No. of Vaccinations"),
@@ -555,11 +544,9 @@ server <- function(input, output) {
       ) %>% 
       hc_legend(layout = "proximate", align = "right")
     
-    hc$x$hc_opts$series <- hc$x$hc_opts$series %>% 
+    hc$x$hc_opts$series = hc$x$hc_opts$series %>% 
       map(function(x){
-        
-        # x <- hc$x$hc_opts$series %>% sample(1) %>% first()
-        x$marker <- list(symbol = x$symbol)
+        x$marker = list(symbol = x$symbol)
         
         x
         
@@ -571,20 +558,21 @@ server <- function(input, output) {
   })
   
   #adding risk levels by team #donut chart
-  # Create a donut chart
-  output$risk_level_donut <- renderPlotly({
+  
+  output$risk_level_donut = renderPlotly({
     
     if ("All Teams" %in% input$teams){
       # Get the donut chart data for teams
-      data <- filteredData() %>%
+      data = filteredData() %>%
         filter(!is.na(risk_level)) %>% 
         group_by(risk_level) %>% 
         count() %>% 
         dplyr::select(risk_level,n) 
       
-      colors <- c("red",  "#3d9970", "orange")
+      colors = c("red",  "#3d9970", "orange")
+      
       # Create a donut chart
-      donut <- plot_ly(data, labels = data$risk_level, values = data$n, 
+      donut = plot_ly(data, labels = data$risk_level, values = data$n, 
                        type = "pie", hole = .6) %>% 
         add_pie(hole = 0.6, marker = list(colors = colors), 
                 textinfo = "label+percent", textposition = "inside",
@@ -592,9 +580,8 @@ server <- function(input, output) {
                 hoverinfo = "label+percent")
       
       # Update the donut chart layout
-      donut <- donut %>%
+      donut = donut %>%
         layout(
-          #title = "Risk Levels of CHW in Kakamega County",
           xaxis = list(
             title = "Variable"
           ),
@@ -611,15 +598,15 @@ server <- function(input, output) {
     else {
     
     # Get the donut chart data for teams
-    data <- filteredData() %>%
+    data = filteredData() %>%
       filter(team==input$teams) %>% 
       group_by(risk_level) %>% 
       count() %>% 
       dplyr::select(risk_level,n) 
     
-    colors <- c("red",  "#3d9970", "orange")
+    colors = c("red",  "#3d9970", "orange")
     # Create a donut chart
-    donut <- plot_ly(data, labels = data$risk_level, values = data$n, 
+    donut = plot_ly(data, labels = data$risk_level, values = data$n, 
                      type = "pie", hole = .4) %>% 
       add_pie(hole = 0.4, marker = list(colors = colors), 
               textinfo = "label+percent", textposition = "inside",
@@ -627,9 +614,8 @@ server <- function(input, output) {
               hoverinfo = "label+percent")
     
     # Update the donut chart layout
-    donut <- donut %>%
+    donut = donut %>%
       layout(
-        #title = "Risk Levels of CHW in Kakamega County",
         xaxis = list(
           title = "Variable"
         ),
@@ -644,7 +630,7 @@ server <- function(input, output) {
     }
   })
   
-  output$maps<-renderLeaflet({
+  output$maps=renderLeaflet({
     
     if ("All Teams" %in% input$teams) {
       
@@ -652,16 +638,16 @@ server <- function(input, output) {
       filter(!subcounty=="CHMT")
     
     #counting the people vaccinated
-    df_sum2 <- vaccine_data_subcounty %>%
+    df_sum2 = vaccine_data_subcounty %>%
       filter(subcounty_upper %in% subset_kakamega$CONSTITUEN) %>%
       group_by(subcounty_upper) %>%
       count()
     
-    subset_kakamega$vaccine_count <- df_sum2$n[match(subset_kakamega$CONSTITUEN, 
+    subset_kakamega$vaccine_count = df_sum2$n[match(subset_kakamega$CONSTITUEN, 
                                                      df_sum2$subcounty_upper)]
     
     #color palettes
-    pal4<-colorBin("BuGn",subset_kakamega$vaccine_count)
+    pal4=colorBin("BuGn",subset_kakamega$vaccine_count)
     
     #drawing a sample map
     leaflet(subset_kakamega) %>%
@@ -708,17 +694,17 @@ server <- function(input, output) {
         filter(!subcounty=="CHMT")
       
       #counting the people vaccinated
-      df_sum2 <- vaccine_data_subcounty %>%
+      df_sum2 = vaccine_data_subcounty %>%
         filter(team==input$teams) %>% 
         filter(subcounty_upper %in% subset_kakamega$CONSTITUEN) %>%
         group_by(subcounty_upper) %>%
         count()
       
-      subset_kakamega$vaccine_count <- df_sum2$n[match(subset_kakamega$CONSTITUEN, 
+      subset_kakamega$vaccine_count = df_sum2$n[match(subset_kakamega$CONSTITUEN, 
                                                        df_sum2$subcounty_upper)]
       
       #color palettes
-      pal4<-colorBin("BuGn",subset_kakamega$vaccine_count)
+      pal4=colorBin("BuGn",subset_kakamega$vaccine_count)
       
       #drawing a sample map
       leaflet(subset_kakamega) %>%
@@ -766,7 +752,7 @@ server <- function(input, output) {
   
   
   #outputting cadre vaccinated numbers
-  output$cadre<-renderPlotly({
+  output$cadre=renderPlotly({
     
     if ("All Teams" %in% input$teams){
       p=filteredData() %>% 
@@ -783,10 +769,7 @@ server <- function(input, output) {
         geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))),
                   color = "white",
                   position = position_stack(vjust = 0.8)) +
-        # geom_text(aes(label=cadre,y =n),
-        #           position = position_dodge(width = 0.5))+
         labs(
-          #title = "Vaccination by Cadre",
           y="Number Vaccinated",
           x=""
         )+
@@ -817,10 +800,7 @@ server <- function(input, output) {
         geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))),
                   color = "white",
                   position = position_stack(vjust = 0.8)) +
-        # geom_text(aes(label=cadre,y =n),
-        #           position = position_dodge(width = 0.5))+
         labs(
-          #title = "Vaccination by Cadre",
           y="Number Vaccinated",
           x=""
         )+
@@ -840,13 +820,13 @@ server <- function(input, output) {
   output$age=renderPlotly({
     
     # Define the age group breaks and labels
-    breaks <- c(17, 24, 34, 44, 54, 65,100)
+    breaks = c(17, 24, 34, 44, 54, 65,100)
     
-    labels <- c("18-24", "25-34", "35-44", 
+    labels = c("18-24", "25-34", "35-44", 
                 "45-54","55-65","Over 65")
     
-    # Use dplyr functions to create age groups
-    vaccine_data <- vaccine_data %>%
+    # create age groups
+    vaccine_data = vaccine_data %>%
       filter(age>17) %>% 
       filter(!is.na(age)) %>% 
       mutate(age_group = cut(age, breaks = breaks, 
@@ -867,10 +847,7 @@ server <- function(input, output) {
         geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))),
                   color = "white",
                   position = position_stack(vjust = 0.8)) +
-        # geom_text(aes(label=cadre,y =n),
-        #           position = position_dodge(width = 0.5))+
         labs(
-          #title = "Vaccination by Age Group",
           y="Number Vaccinated",
           x=""
         )+
@@ -901,10 +878,7 @@ server <- function(input, output) {
         geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))),
                   color = "white",
                   position = position_stack(vjust = 0.8)) +
-        # geom_text(aes(label=cadre,y =n),
-        #           position = position_dodge(width = 0.5))+
         labs(
-          #title = "Vaccination by Age Group",
           y="Number Vaccinated",
           x=""
         )+
@@ -922,7 +896,7 @@ server <- function(input, output) {
   })
   
   #outputting cadre vaccinated numbers
-  output$gender<-renderPlotly({
+  output$gender=renderPlotly({
     
     if ("All Teams" %in% input$teams){
       p=filteredData() %>%
@@ -940,10 +914,7 @@ server <- function(input, output) {
         geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))),
                   color = "white",
                   position = position_stack(vjust = 0.8)) +
-        # geom_text(aes(label=cadre,y =n),
-        #           position = position_dodge(width = 0.5))+
         labs(
-          #title = "Vaccination by Gender",
           y="Number Vaccinated",
           x=""
         )+
@@ -975,10 +946,7 @@ server <- function(input, output) {
         geom_text(aes(label = paste(n, "<br>",scales::percent(round(n / sum(n),1)))),
                   color = "white",
                   position = position_stack(vjust = 0.8)) +
-        # geom_text(aes(label=cadre,y =n),
-        #           position = position_dodge(width = 0.5))+
         labs(
-          #title = "Vaccination by Cadre",
           y="Number Vaccinated",
           x=""
         )+
