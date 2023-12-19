@@ -214,7 +214,7 @@ credentials = data.frame(
 # ui
 ui = secure_app(head_auth = tags$script(inactivity),
   navbarPage(
-  title = tags$div(HTML('HCW VACCINATIONS DASHBOARD')),
+  title = 'HCW VACCINATIONS DASHBOARD', #tags$div(HTML(  )),
   theme = "flatly",
   #inverse = TRUE,
   tags$style(HTML('.navbar { background-color: #00b9e3; }')),
